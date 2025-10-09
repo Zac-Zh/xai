@@ -1,0 +1,9 @@
+task: "Lift"
+robot: "Panda"
+camera: {name: "agentview", width: 640, height: 480, fps: 10}
+max_steps: 150
+seeds: [0, 1, 2]
+save_video: false
+paths:
+  out_dir: "results"
+

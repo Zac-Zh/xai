@@ -1,0 +1,12 @@
+perception:
+  conf_tau: 0.35
+  seg_iou_tau: 0.50
+geometry:
+  pnp_rmse_tau: 3.0
+planning:
+  max_collisions: 0
+control:
+  track_rmse_tau: 0.02
+system:
+  success_dist_tau: 0.03
+

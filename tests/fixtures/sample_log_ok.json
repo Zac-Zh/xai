@@ -1,0 +1,11 @@
+{
+  "run_id": "2024-01-01T00:00:00Z_0",
+  "meta": {"task": "Lift", "robot": "Panda", "seed": 0, "scenario": "occlusion", "level": 0.0, "steps": 150, "utc_time": "2024-01-01T00:00:00Z"},
+  "perception": {"avg_conf": 0.8, "detected": true, "seg_iou": 0.6, "bbox": [100, 100, 150, 150]},
+  "geometry": {"pnp_success": true, "pnp_rmse": 1.0, "pose_estimate": [0.5, 0.5, 0.0]},
+  "planning": {"success": true, "path_cost": 0.5, "collisions": 0, "planner": "RRTstar"},
+  "control": {"track_rmse": 0.01, "overshoot": 0.01, "oscillation": false},
+  "system": {"success": true, "final_dist_to_goal": 0.02, "stop_reason": null},
+  "artifacts": {"rgb_path": "results/artifacts/sample_rgb.png", "mask_path": "results/artifacts/sample_mask.png", "path_plot": "results/artifacts/sample_path.png"}
+}
+
