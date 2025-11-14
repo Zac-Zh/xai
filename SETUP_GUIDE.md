@@ -2,6 +2,33 @@
 
 Complete guide for running R2 on a new server from scratch.
 
+## 📍 Repository Information
+
+- **GitHub**: https://github.com/Zac-Zh/xai
+- **Branch**: `claude/complete-automation-pipelines-01QfZQ82dnAMFuCZbmtxbfA1`
+- **Clone Command**: `git clone https://github.com/Zac-Zh/xai.git`
+
+---
+
+## ⚡ **FASTEST START** (Copy-Paste Ready)
+
+```bash
+# One-liner for new server (Linux/Mac with bash)
+git clone https://github.com/Zac-Zh/xai.git && cd xai && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && bash run_all.sh fast
+```
+
+Or step-by-step:
+```bash
+git clone https://github.com/Zac-Zh/xai.git
+cd xai
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+bash run_all.sh fast
+```
+
+Results will be in: `results/final_report/research_report.html`
+
 ---
 
 ## 📋 Prerequisites
@@ -27,15 +54,30 @@ Complete guide for running R2 on a new server from scratch.
 
 ## 🚀 Quick Start (Step-by-Step)
 
-### Step 1: Clone Repository
+### Step 1: Get the Code
 
+**Option A: Clone from GitHub**
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/xai.git
+git clone https://github.com/Zac-Zh/xai.git
 cd xai
+```
 
-# Or if you already have it:
+**Option B: If you already have the code**
+```bash
+# Navigate to existing directory
 cd /path/to/xai
+
+# Pull latest changes
+git pull origin claude/complete-automation-pipelines-01QfZQ82dnAMFuCZbmtxbfA1
+```
+
+**Option C: Download as ZIP**
+```bash
+# Download from GitHub and extract
+wget https://github.com/Zac-Zh/xai/archive/refs/heads/claude/complete-automation-pipelines-01QfZQ82dnAMFuCZbmtxbfA1.zip
+unzip complete-automation-pipelines-01QfZQ82dnAMFuCZbmtxbfA1.zip
+cd xai-*
 ```
 
 ### Step 2: Check Python Version
@@ -548,3 +590,29 @@ pip install -r requirements.txt
 bash run_all.sh fast
 open results/final_report/research_report.html
 ```
+
+---
+
+## 🔗 Quick Reference Card
+
+**Repository**: https://github.com/Zac-Zh/xai  
+**Branch**: `claude/complete-automation-pipelines-01QfZQ82dnAMFuCZbmtxbfA1`
+
+**Clone & Run**:
+```bash
+git clone https://github.com/Zac-Zh/xai.git
+cd xai
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+bash run_all.sh fast
+```
+
+**View Results**: `results/final_report/research_report.html`
+
+**Documentation**:
+- [README.md](README.md) - Project overview
+- [SETUP_GUIDE.md](SETUP_GUIDE.md) - This file
+- [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) - Usage guide  
+- [PUBLICATION_READY.md](PUBLICATION_READY.md) - Publication guide
+
+**Support**: Check GitHub Issues or validate locally with `python validate_code.py`
