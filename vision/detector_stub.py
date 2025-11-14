@@ -55,3 +55,23 @@ def detect_target(image: np.ndarray, ctx: Dict) -> Dict[str, object]:
         conf *= 0.5  # low confidence on miss
     return {"detected": detected, "avg_conf": float(conf), "bbox": bbox}
 
+
+# Unified interface (compatible with real implementations)
+def detect(img: np.ndarray, perturbation_level: float = 0.0) -> Dict[str, object]:
+    """
+    Unified detection interface (compatible with detector_real.py).
+
+    Args:
+        img: RGB image
+        perturbation_level: Perturbation level (0.0 to 1.0)
+
+    Returns:
+        Detection dictionary
+    """
+    ctx = {
+        "noise": {"occlusion": perturbation_level},
+        "rng": np.random.default_rng(0),
+        "gt": {"target_x": 0.5, "target_y": 0.5},
+    }
+    return detect_target(img, ctx)
+

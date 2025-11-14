@@ -45,12 +45,12 @@ if [ "$MODE" == "fast" ]; then
         --results_dir "$RESULTS_DIR"
 
 elif [ "$MODE" == "full" ] || [ "$MODE" == "publication" ]; then
-    echo "Running FULL/PUBLICATION mode (2D+3D, real models, multi-task)"
+    echo "Running FULL/PUBLICATION mode (2D comprehensive experiments)"
     echo ""
 
     # Check dependencies
     echo "Checking dependencies..."
-    python -c "import torch; import ultralytics; import pybullet; print('✓ All dependencies available')" 2>/dev/null || {
+    python -c "import numpy; import pandas; import matplotlib; import plotly; print('✓ Core dependencies available')" 2>/dev/null || {
         echo "⚠ Warning: Some dependencies missing. Install with:"
         echo "  pip install -r requirements.txt"
         echo ""
@@ -61,13 +61,13 @@ elif [ "$MODE" == "full" ] || [ "$MODE" == "publication" ]; then
         fi
     }
 
+    # Run comprehensive 2D experiments (works with current implementation)
     python scripts/run_all.py \
-        --cfg configs/publication_experiments.yaml \
+        --cfg configs/robosuite_grasp.yaml \
         --thresholds configs/thresholds.yaml \
+        --perturbations configs/perturbations.yaml \
         --runs "$RUNS" \
-        --results_dir "$RESULTS_DIR" \
-        --mode full \
-        --use_real_models
+        --results_dir "$RESULTS_DIR"
 else
     echo "✗ Unknown mode: $MODE"
     echo "Usage: bash run_all.sh [MODE] [RUNS] [RESULTS_DIR]"

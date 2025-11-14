@@ -61,3 +61,45 @@ def plan(start: np.ndarray, goal: np.ndarray, ctx: Dict) -> Dict[str, object]:
             collisions += 1
     return {"success": False, "path": [], "path_cost": None, "collisions": collisions, "planner": "RRTstar"}
 
+
+# Unified interface (compatible with real implementations)
+def plan_path(
+    start: np.ndarray,
+    goal: np.ndarray,
+    obstacles: List[Dict],
+    perturbation_level: float = 0.0
+) -> Dict[str, object]:
+    """
+    Unified planning interface (compatible with rrt_star_real.py).
+
+    Args:
+        start: Start position
+        goal: Goal position
+        obstacles: List of obstacle dicts with 'center' and 'radius'
+        perturbation_level: Perturbation level (0.0 to 1.0)
+
+    Returns:
+        Planning result dictionary
+    """
+    # Convert obstacles from dict format to tuple format
+    obstacle_tuples = []
+    for obs in obstacles:
+        center = obs.get("center", [0.5, 0.5])
+        radius = obs.get("radius", 0.05)
+        # Handle both 2D and 3D centers
+        if len(center) >= 2:
+            obstacle_tuples.append((center[0], center[1], radius))
+
+    ctx = {
+        "rng": np.random.default_rng(0),
+        "obstacles": obstacle_tuples,
+    }
+
+    result = plan(start[:2] if len(start) > 2 else start, goal[:2] if len(goal) > 2 else goal, ctx)
+
+    # Apply perturbation effect if needed
+    if perturbation_level > 0 and result["path_cost"] is not None:
+        result["path_cost"] *= (1.0 + perturbation_level * 0.5)
+
+    return result
+

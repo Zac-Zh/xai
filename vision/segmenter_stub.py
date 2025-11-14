@@ -45,3 +45,30 @@ def segment_target(image: np.ndarray, ctx: Dict) -> Dict[str, object]:
     iou: Optional[float] = float(inter / union) if union > 0 else None
     return {"mask": pred_mask.astype(bool), "seg_iou": iou}
 
+
+# Unified interface (compatible with real implementations)
+def segment(img: np.ndarray, bbox: Optional[list] = None, perturbation_level: float = 0.0) -> Dict[str, object]:
+    """
+    Unified segmentation interface (compatible with segmenter_real.py).
+
+    Args:
+        img: RGB image
+        bbox: Optional bounding box (ignored in stub)
+        perturbation_level: Perturbation level (0.0 to 1.0)
+
+    Returns:
+        Segmentation dictionary with 'mask', 'seg_iou', 'success', 'bbox'
+    """
+    ctx = {
+        "noise": {"occlusion": perturbation_level, "lighting": perturbation_level * 0.5},
+        "rng": np.random.default_rng(0),
+        "gt": {"target_x": 0.5, "target_y": 0.5},
+    }
+    result = segment_target(img, ctx)
+    # Add fields expected by unified interface
+    result["success"] = result["seg_iou"] is not None and result["seg_iou"] > 0.3
+    if result["seg_iou"] is None:
+        result["seg_iou"] = 0.0
+    result["bbox"] = bbox if bbox is not None else [0, 0, img.shape[1], img.shape[0]]
+    return result
+
