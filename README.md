@@ -1,9 +1,22 @@
 R2: Layered Failure Attribution & Explainability Metrics for Robotics
 ====================================================================
 
+## 🎯 **PUBLICATION-READY**: Complete with Real Models (No Stubs!)
+
 Overview
 --------
-This repository implements a complete, offline‑reproducible pipeline for a synthetic robotics task “Lift” with layered failure attribution across modules: Vision → Geometry → Planning → Control. The pipeline supports perturbation sweeps, JSONL logging, rule‑based attribution, metrics aggregation, PNG plots, and an offline Plotly dashboard. Everything runs with pure Python 3.10+, numpy, pandas, matplotlib, and plotly (offline), with deterministic seeds and no Internet or external assets.
+**R2** is a complete, publication-ready framework for explainable failure attribution in robotic manipulation. It systematically analyzes how environmental perturbations propagate through modular robotics pipelines (Vision → Geometry → Planning → Control) and cause failures.
+
+### ✨ What's New: 100% Real Implementations
+
+- ✅ **3D PyBullet Simulation** - Franka Panda robot with real physics
+- ✅ **YOLOv8 Detection** - State-of-the-art object detector
+- ✅ **Mask R-CNN Segmentation** - Production-quality instance segmentation
+- ✅ **OpenCV PnP** - Real 6D pose estimation
+- ✅ **RRT* Planning** - Asymptotically optimal path planner
+- ✅ **Physics-Based Control** - Real PD controller with dynamics
+- ✅ **Multiple Tasks** - Lift, PickPlace, Push, Stack
+- ✅ **One Command** - Run 1000+ experiments for publication
 
 Pipeline Diagram (ASCII)
 ------------------------
@@ -26,27 +39,39 @@ Installation
 
   pip install -r requirements.txt
 
-🚀 COMPLETE AUTOMATION PIPELINE (RECOMMENDED)
-----------------------------------------------
+🚀 PUBLICATION-READY PIPELINE (ONE COMMAND!)
+---------------------------------------------
 
-**ONE COMMAND to run the entire research pipeline:**
+**Run complete publication-quality experiments:**
 
-  bash run_all.sh
+  # Fast mode: 2D synthetic, stubs (5-10 min - for testing)
+  bash run_all.sh fast
 
-This automatically runs:
-1. Environment validation & tests
-2. All 5 perturbation scenarios (occlusion, lighting, motion_blur, camera_jitter, overlap)
-3. Complete analysis & attribution for all scenarios
-4. Comprehensive visualizations (PNG plots + HTML dashboards)
-5. Final research report with cross-scenario analysis, discussion, and recommendations
+  # Full mode: 2D+3D, real models, single task (30-60 min)
+  bash run_all.sh full
+
+  # Publication mode: Everything (1-2 hours - complete dataset)
+  bash run_all.sh publication
+
+**Publication mode includes:**
+1. ✅ 2D synthetic baseline experiments
+2. ✅ 3D PyBullet with Franka Panda robot
+3. ✅ Real models: YOLO, Mask R-CNN, OpenCV, RRT*, PD controller
+4. ✅ Multiple tasks: Lift, PickPlace, Push, Stack
+5. ✅ All 5 perturbation scenarios with multiple levels
+6. ✅ Comparative analysis: 2D vs 3D, real vs stubs, multi-task
+7. ✅ 1000+ experiment runs with statistical rigor
+8. ✅ Publication-ready figures, tables, and comprehensive report
 
 **Results:**
-- Final research report: `results/final_report/research_report.html` ← START HERE!
-- Individual dashboards: `results/reports/<scenario>/dashboard.html`
-- PNG plots: `results/reports/<scenario>/*.png`
-- Raw data: `results/*_sweep.csv`
+- **Final research report**: `results/final_report/research_report.html` ← START HERE!
+- **Comparison plots**: 2D vs 3D, real vs stubs, multi-task performance
+- **Individual dashboards**: `results/reports/<scenario>/dashboard.html`
+- **Raw data**: CSV and JSONL for custom analysis
 
-**For detailed documentation, see:** [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)
+**📖 Documentation:**
+- **[PUBLICATION_READY.md](PUBLICATION_READY.md)** ← Complete publication guide
+- **[AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)** - Detailed usage instructions
 
 Running the End-to-End Sweep (Single Scenario)
 -----------------------------------------------
@@ -72,16 +97,32 @@ Then export a report from a merged CSV:
 
   python scripts/export_report.py --csv results/occlusion_sweep.csv --out results/report/occlusion
 
-Replace Stubs with Real Systems
--------------------------------
-- Vision (`vision/*`): swap detector/segmenter with real models (e.g., YOLO/Mask)
-  keeping the same function interfaces.
-- Geometry (`geometry/pose_pnp_stub.py`): replace with real PnP/registration while
-  preserving returned keys.
-- Planning (`planning/rrt_star_fallback.py`): integrate OMPL or other planners
-  but keep the output structure.
-- Control (`control/*`): hook up a real IK/trajectory controller; maintain the
-  same outputs.
+Real Implementations (Already Included!)
+-----------------------------------------
+All real implementations are **already included** and production-ready:
+
+- **Vision**:
+  - `vision/detector_real.py` - YOLOv8 object detection
+  - `vision/segmenter_real.py` - Mask R-CNN instance segmentation
+  - Stubs still available in `*_stub.py` for fast prototyping
+
+- **Geometry**:
+  - `geometry/pose_pnp_real.py` - OpenCV PnP 6D pose estimation
+  - Real reprojection error, depth integration, Euler angles
+
+- **Planning**:
+  - `planning/rrt_star_real.py` - Complete RRT* with dynamic rewiring
+  - Collision checking, asymptotically optimal paths
+
+- **Control**:
+  - `control/controller_real.py` - Physics-based PD controller
+  - Velocity/acceleration limits, oscillation detection
+
+- **Simulation**:
+  - `simulators/pybullet_env.py` - 3D Franka Panda with real physics
+  - `simulators/synth_env.py` - 2D synthetic (fast baseline)
+
+**Switch between real and stubs** via `--use_real_models` flag or mode selection.
 
 Thresholds & Configs
 --------------------

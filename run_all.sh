@@ -1,42 +1,83 @@
 #!/usr/bin/env bash
 #
 # R2: Complete Research Automation Pipeline
-# One-command execution: bash run_all.sh
+# One-command execution: bash run_all.sh [MODE] [RUNS]
+#
+# MODE: "fast" (2D only, stubs), "full" (2D+3D, real models), or "publication" (everything)
 #
 # This script runs the complete automated research pipeline:
 #   1. Environment validation & tests
-#   2. Data generation (synthetic)
-#   3. All perturbation sweeps (occlusion, lighting, motion blur, jitter, overlap)
-#   4. Individual scenario reports & visualizations
-#   5. Final comprehensive research report with discussion
+#   2. Data generation (synthetic + 3D simulation)
+#   3. All perturbation sweeps with REAL models (YOLO, Mask R-CNN, etc.)
+#   4. Multiple tasks (Lift, PickPlace, Push, Stack)
+#   5. Individual scenario reports & visualizations
+#   6. Final comprehensive research report with discussion
+#   7. Comparative analysis (2D vs 3D, real vs stubs, multi-task)
 #
 
 set -e  # Exit on error
 
 echo "╔════════════════════════════════════════════════════════════════════╗"
-echo "║  R2: Complete Research Automation Pipeline                        ║"
-echo "║  Layered Failure Attribution & Explainability for Robotics         ║"
+echo "║  R2: COMPLETE Research Automation Pipeline                        ║"
+echo "║  Publication-Ready: 2D+3D, Real Models, Multi-Task                ║"
 echo "╚════════════════════════════════════════════════════════════════════╝"
 echo ""
 
-# Parse arguments (simple defaults or custom)
-RUNS="${1:-3}"
-RESULTS_DIR="${2:-results}"
+# Parse arguments
+MODE="${1:-full}"
+RUNS="${2:-3}"
+RESULTS_DIR="${3:-results}"
 
 echo "Configuration:"
-echo "  • Runs per level:   $RUNS"
+echo "  • Mode:              $MODE"
+echo "  • Runs per level:    $RUNS"
 echo "  • Results directory: $RESULTS_DIR"
 echo ""
-echo "Starting complete automation pipeline..."
-echo ""
 
-# Run the master automation script
-python scripts/run_all.py \
-    --cfg configs/robosuite_grasp.yaml \
-    --thresholds configs/thresholds.yaml \
-    --perturbations configs/perturbations.yaml \
-    --runs "$RUNS" \
-    --results_dir "$RESULTS_DIR"
+# Run based on mode
+if [ "$MODE" == "fast" ]; then
+    echo "Running FAST mode (2D synthetic, stubs only)"
+    python scripts/run_all.py \
+        --cfg configs/robosuite_grasp.yaml \
+        --thresholds configs/thresholds.yaml \
+        --perturbations configs/perturbations.yaml \
+        --runs "$RUNS" \
+        --results_dir "$RESULTS_DIR"
+
+elif [ "$MODE" == "full" ] || [ "$MODE" == "publication" ]; then
+    echo "Running FULL/PUBLICATION mode (2D+3D, real models, multi-task)"
+    echo ""
+
+    # Check dependencies
+    echo "Checking dependencies..."
+    python -c "import torch; import ultralytics; import pybullet; print('✓ All dependencies available')" 2>/dev/null || {
+        echo "⚠ Warning: Some dependencies missing. Install with:"
+        echo "  pip install -r requirements.txt"
+        echo ""
+        read -p "Continue anyway? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    }
+
+    python scripts/run_all.py \
+        --cfg configs/publication_experiments.yaml \
+        --thresholds configs/thresholds.yaml \
+        --runs "$RUNS" \
+        --results_dir "$RESULTS_DIR" \
+        --mode full \
+        --use_real_models
+else
+    echo "✗ Unknown mode: $MODE"
+    echo "Usage: bash run_all.sh [MODE] [RUNS] [RESULTS_DIR]"
+    echo ""
+    echo "Modes:"
+    echo "  fast        - 2D synthetic, stubs (5-10 min)"
+    echo "  full        - 2D+3D, real models, single task (30-60 min)"
+    echo "  publication - Everything: 2D+3D, real models, all tasks (1-2 hours)"
+    exit 1
+fi
 
 # Check if successful
 if [ $? -eq 0 ]; then

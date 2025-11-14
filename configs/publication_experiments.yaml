@@ -1,0 +1,92 @@
+# Complete experiment configuration for publication-ready results
+# Includes both 2D (synthetic) and 3D (PyBullet) scenarios
+# Multiple tasks: Lift, PickPlace, Push, Stack
+# Real implementations: YOLO, Mask R-CNN, OpenCV PnP, RRT*, PD Controller
+
+experiments:
+  # 2D Synthetic experiments (fast, reproducible baseline)
+  - name: "2D_Synthetic"
+    mode: "2d"
+    use_real_models: false  # Use stubs for speed
+    tasks: ["Lift"]
+    scenarios:
+      - name: "occlusion"
+        levels: [0.0, 0.2, 0.4, 0.6]
+      - name: "lighting"
+        levels: [0.0, 0.3, 0.6]
+      - name: "motion_blur"
+        levels: [0.0, 0.5, 1.0]
+      - name: "overlap"
+        levels: [0.0, 0.5]
+      - name: "camera_jitter"
+        levels: [0.0, 0.3, 0.6]
+    runs_per_level: 3
+
+  # 3D PyBullet with real models (publication quality)
+  - name: "3D_Real_Single_Task"
+    mode: "3d"
+    use_real_models: true  # Use YOLO, Mask R-CNN, etc.
+    tasks: ["Lift"]
+    scenarios:
+      - name: "occlusion"
+        levels: [0.0, 0.2, 0.4, 0.6]
+      - name: "lighting"
+        levels: [0.0, 0.3, 0.6]
+      - name: "motion_blur"
+        levels: [0.0, 0.5, 1.0]
+    runs_per_level: 5  # More runs for statistical significance
+
+  # 3D PyBullet multi-task (demonstrates generalization)
+  - name: "3D_Multi_Task"
+    mode: "3d"
+    use_real_models: true
+    tasks: ["Lift", "PickPlace", "Push", "Stack"]
+    scenarios:
+      - name: "occlusion"
+        levels: [0.0, 0.4]  # Just baseline and high perturbation
+      - name: "lighting"
+        levels: [0.0, 0.6]
+    runs_per_level: 3
+
+  # Ablation: 3D with stubs (to show real models help)
+  - name: "3D_Stubs_Ablation"
+    mode: "3d"
+    use_real_models: false
+    tasks: ["Lift"]
+    scenarios:
+      - name: "occlusion"
+        levels: [0.0, 0.2, 0.4, 0.6]
+    runs_per_level: 3
+
+# Analysis settings
+analysis:
+  compare_2d_vs_3d: true
+  compare_real_vs_stub: true
+  compare_across_tasks: true
+
+  # Metrics to focus on
+  key_metrics:
+    - "system.success"
+    - "perception.avg_conf"
+    - "perception.seg_iou"
+    - "geometry.pnp_rmse"
+    - "planning.path_cost"
+    - "control.track_rmse"
+
+# Publication outputs
+outputs:
+  paper_plots:
+    - "comparison_2d_vs_3d_success_rate"
+    - "comparison_real_vs_stub_robustness"
+    - "multi_task_generalization"
+    - "module_failure_attribution_per_scenario"
+    - "sensitivity_analysis_all_scenarios"
+
+  tables:
+    - "summary_statistics"
+    - "ablation_study_results"
+    - "cross_task_performance"
+
+  videos:
+    - "successful_lift_visualization"
+    - "failure_case_analysis"
