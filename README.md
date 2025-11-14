@@ -26,10 +26,32 @@ Installation
 
   pip install -r requirements.txt
 
-Running the End-to-End Sweep
-----------------------------
+🚀 COMPLETE AUTOMATION PIPELINE (RECOMMENDED)
+----------------------------------------------
 
-Use the one‑click script:
+**ONE COMMAND to run the entire research pipeline:**
+
+  bash run_all.sh
+
+This automatically runs:
+1. Environment validation & tests
+2. All 5 perturbation scenarios (occlusion, lighting, motion_blur, camera_jitter, overlap)
+3. Complete analysis & attribution for all scenarios
+4. Comprehensive visualizations (PNG plots + HTML dashboards)
+5. Final research report with cross-scenario analysis, discussion, and recommendations
+
+**Results:**
+- Final research report: `results/final_report/research_report.html` ← START HERE!
+- Individual dashboards: `results/reports/<scenario>/dashboard.html`
+- PNG plots: `results/reports/<scenario>/*.png`
+- Raw data: `results/*_sweep.csv`
+
+**For detailed documentation, see:** [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)
+
+Running the End-to-End Sweep (Single Scenario)
+-----------------------------------------------
+
+Use the one‑click script for occlusion only:
 
   bash reproduce.sh
 
