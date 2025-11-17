@@ -140,6 +140,11 @@ class ClassicalOracle:
         goal = np.array([state["target_x"], state["target_y"]], dtype=float)
         plan_out = plan(start, goal, ctx)
 
+        # Capture additional frames during execution (for video dataset)
+        # Render a few more frames to create a short sequence
+        for _ in range(min(5, int(self.cfg["max_steps"]) // 10)):
+            rollout_frames.append(env.render_rgb().copy())
+
         # Run Control module
         ctrl = track(plan_out.get("path", []), ctx)
 

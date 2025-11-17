@@ -78,6 +78,10 @@ class ExpertDemonstrationDataset(Dataset):
         """
         trajectories = []
 
+        skipped_no_frames = 0
+        skipped_no_actions = 0
+        skipped_not_enough_data = 0
+
         for demo in self.demonstrations:
             # Load frames
             frames = []
@@ -89,31 +93,40 @@ class ExpertDemonstrationDataset(Dataset):
                         frame = self._resize_image(frame)
                     frames.append(frame)
 
-            # Extract action sequence from the planned path
-            # The planning module generates a path (list of waypoints)
-            planning_data = demo["log_data"]["planning"]
-
-            # For the synthetic environment, we use a simplified action space:
-            # actions are waypoints in 2D space
-            # In a real implementation, actions would be robot joint commands
-
-            # Create a simple action sequence from start to goal
-            geometry_data = demo["log_data"]["geometry"]
-            pose_estimate = geometry_data["pose_estimate"]
-
-            # Simple action: target position
+            # Extract action sequence from demonstrations
+            # Use the target position from geometry as the action
             actions = []
-            if len(pose_estimate) >= 2:
-                # Create action sequence moving toward target
-                target_x, target_y = pose_estimate[0], pose_estimate[1]
-                # Generate intermediate waypoints
-                for i in range(self.action_horizon):
-                    t = (i + 1) / self.action_horizon
-                    # Interpolate toward target (simplified)
-                    action = np.array([target_x * t, target_y * t], dtype=np.float32)
-                    actions.append(action)
 
-            if len(frames) >= self.obs_horizon and len(actions) >= self.action_horizon:
+            try:
+                # Get target position from geometry
+                geometry_data = demo["log_data"]["geometry"]
+                pose_estimate = geometry_data["pose_estimate"]
+
+                # Get system data for ground truth goal
+                meta_data = demo["log_data"]["meta"]
+
+                if len(pose_estimate) >= 2:
+                    # Target position (x, y)
+                    target_x, target_y = float(pose_estimate[0]), float(pose_estimate[1])
+
+                    # Create action sequence - for imitation learning, we simply
+                    # repeat the target position (the policy learns to move toward it)
+                    for i in range(self.action_horizon):
+                        # Gradually interpolate toward target
+                        progress = (i + 1) / self.action_horizon
+                        action = np.array([target_x * progress, target_y * progress], dtype=np.float32)
+                        actions.append(action)
+            except (KeyError, IndexError, TypeError) as e:
+                # Skip this demo if we can't extract actions
+                skipped_no_actions += 1
+                continue
+
+            # Only add if we have enough frames and actions
+            if len(frames) < self.obs_horizon:
+                skipped_no_frames += 1
+            elif len(actions) < self.action_horizon:
+                skipped_not_enough_data += 1
+            else:
                 trajectories.append({
                     "observations": frames,
                     "actions": actions,
@@ -121,6 +134,13 @@ class ExpertDemonstrationDataset(Dataset):
                 })
 
         print(f"Prepared {len(trajectories)} valid trajectories")
+        if skipped_no_frames > 0:
+            print(f"  Skipped {skipped_no_frames} demos: insufficient frames (need {self.obs_horizon}, have <{self.obs_horizon})")
+        if skipped_no_actions > 0:
+            print(f"  Skipped {skipped_no_actions} demos: failed to extract actions")
+        if skipped_not_enough_data > 0:
+            print(f"  Skipped {skipped_not_enough_data} demos: insufficient actions")
+
         return trajectories
 
     def _resize_image(self, image: np.ndarray) -> np.ndarray:
