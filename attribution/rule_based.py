@@ -25,7 +25,7 @@ def attribute_failure(log: Dict, th: Dict) -> Tuple[List[Tuple[str, str]], str]:
     p = log["perception"]
     if not bool(p.get("detected", False)):
         errs.append(("Perception", "miss_detection"))
-    if float(p.get("avg_conf", 0.0)) < float(th["perception"]["conf_tau"]):
+    if float(p.get("avg_conf") or 0.0) < float(th["perception"]["conf_tau"]):
         errs.append(("Perception", "low_conf"))
     seg_iou = p.get("seg_iou", None)
     if seg_iou is not None and float(seg_iou) < float(th["perception"]["seg_iou_tau"]):
@@ -44,7 +44,7 @@ def attribute_failure(log: Dict, th: Dict) -> Tuple[List[Tuple[str, str]], str]:
     pl = log["planning"]
     if not bool(pl.get("success", False)):
         errs.append(("Planning", "no_path"))
-    if int(pl.get("collisions", 0)) > int(th["planning"]["max_collisions"]):
+    if int(pl.get("collisions") or 0) > int(th["planning"]["max_collisions"]):
         errs.append(("Planning", "collision_pred"))
     pc = pl.get("path_cost", None)
     if pc is not None and float(pc) > 1.5:  # heuristic threshold
@@ -55,7 +55,7 @@ def attribute_failure(log: Dict, th: Dict) -> Tuple[List[Tuple[str, str]], str]:
     tr = c.get("track_rmse", None)
     if tr is None or float(tr) > float(th["control"]["track_rmse_tau"]):
         errs.append(("Control", "tracking_rmse_high"))
-    if float(c.get("overshoot", 0.0)) > 0.05:
+    if float(c.get("overshoot") or 0.0) > 0.05:
         errs.append(("Control", "overshoot_high"))
     if bool(c.get("oscillation", False)):
         errs.append(("Control", "oscillation"))
