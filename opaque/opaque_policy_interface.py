@@ -180,17 +180,23 @@ class OpaquePolicy:
             predicted_actions = self.policy.predict_action(obs_tensor)  # (1, action_horizon, action_dim)
             predicted_actions = predicted_actions[0].cpu().numpy()  # (action_horizon, action_dim)
 
-            # Take the first action
-            action = predicted_actions[0]
-            predicted_actions_list.append(action.copy())
+            # Take the first action (predicted absolute position)
+            predicted_position = predicted_actions[0]
+            predicted_actions_list.append(predicted_position.copy())
 
-            # Execute action (simplified: move toward predicted position)
-            current_position = action.copy()
+            # Calculate delta (action for env.step expects delta, not absolute position)
+            delta = predicted_position - current_position
 
-            # Check if reached goal
+            # Execute action in environment
+            new_state, reward, done, info = env.step(delta)
+
+            # Update current position from environment
+            current_position = np.array([new_state["agent_x"], new_state["agent_y"]], dtype=float)
+
+            # Check if reached goal or episode done
             distance_to_goal = float(np.linalg.norm(current_position - goal))
 
-            if distance_to_goal < success_distance_threshold:
+            if distance_to_goal < success_distance_threshold or done:
                 break
 
         # Calculate final distance

@@ -98,24 +98,32 @@ class ExpertDemonstrationDataset(Dataset):
             actions = []
 
             try:
-                # Get target position from geometry
+                # Get start and target positions
+                meta_data = demo["log_data"]["meta"]
                 geometry_data = demo["log_data"]["geometry"]
                 pose_estimate = geometry_data["pose_estimate"]
 
-                # Get system data for ground truth goal
-                meta_data = demo["log_data"]["meta"]
-
                 if len(pose_estimate) >= 2:
-                    # Target position (x, y)
+                    # Target position (x, y) from geometry
                     target_x, target_y = float(pose_estimate[0]), float(pose_estimate[1])
+                    target = np.array([target_x, target_y], dtype=np.float32)
 
-                    # Create action sequence - for imitation learning, we simply
-                    # repeat the target position (the policy learns to move toward it)
+                    # Get agent start position from metadata
+                    # This requires the Oracle to save the initial agent position
+                    # For now, we'll use a simplified approach: interpolate from current to target
+                    # The policy should learn to move toward the target regardless of start
+
+                    # Create action sequence: waypoints from start to target
+                    # Since we don't have the agent's initial position in the log,
+                    # we create a sequence of positions approaching the target
                     for i in range(self.action_horizon):
-                        # Gradually interpolate toward target
+                        # Linearly interpolate toward target
+                        # This represents intermediate waypoints
                         progress = (i + 1) / self.action_horizon
-                        action = np.array([target_x * progress, target_y * progress], dtype=np.float32)
-                        actions.append(action)
+                        # For simplicity, create waypoints that get progressively closer to target
+                        # The policy will learn the general pattern of moving toward detected objects
+                        waypoint = target * progress  # This is a simplification
+                        actions.append(waypoint)
             except (KeyError, IndexError, TypeError) as e:
                 # Skip this demo if we can't extract actions
                 skipped_no_actions += 1

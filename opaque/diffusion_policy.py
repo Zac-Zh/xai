@@ -389,7 +389,7 @@ class DiffusionPolicy(nn.Module):
 
             # DDIM update
             alpha_t = self.alphas_cumprod[t]
-            alpha_t_prev = self.alphas_cumprod_prev[t] if t > 0 else torch.tensor(1.0, device=device)
+            alpha_t_prev = self.alphas_cumprod_prev[t] if t.item() > 0 else torch.tensor(1.0, device=device)
 
             # Predicted x0
             pred_x0 = (actions - torch.sqrt(1 - alpha_t) * noise_pred) / torch.sqrt(alpha_t)
