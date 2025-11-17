@@ -29,11 +29,34 @@ Installation
 Running the End-to-End Sweep
 ----------------------------
 
+### Legacy Single-Scenario Run
+
 Use the one‑click script:
 
   bash reproduce.sh
 
 This runs a perturbation sweep for the occlusion scenario and generates CSV, PNG plots, and an offline HTML dashboard under `results/`.
+
+### 🆕 Publication-Ready Comprehensive Experiment Suite
+
+**NEW**: Run all 5 scenarios with comprehensive statistical analysis, validation, and interactive dashboards:
+
+  # Full suite (100 runs per condition, ~60 minutes)
+  ./run_all_experiments.sh
+
+  # Quick test (10 runs per condition, ~10 minutes)
+  ./run_all_experiments.sh --quick
+
+**Includes**:
+- ✅ 5 comprehensive scenarios (occlusion, module_failure, data_corruption, noise_injection, adversarial_patches)
+- ✅ Real 3D models (human, vehicle, traffic sign)
+- ✅ Sufficient statistical power (100 runs per condition)
+- ✅ Automated validation and quality checks
+- ✅ Cross-scenario comparative analysis
+- ✅ Module vulnerability analysis
+- ✅ Beautiful interactive HTML dashboards
+
+See **[EXPERIMENTS.md](EXPERIMENTS.md)** for complete documentation.
 
 Run a Single Scenario
 ---------------------

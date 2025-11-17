@@ -1,12 +1,51 @@
 scenarios:
+  # Publication-ready comprehensive scenarios
   - name: "occlusion"
-    levels: [0.0, 0.2, 0.4, 0.6]
+    levels: [0.0, 0.2, 0.4, 0.6, 0.8]
+    description: "Partial and complete object occlusion"
+    runs_per_level: 100  # Sufficient statistical power
+  - name: "module_failure"
+    levels: [0.0, 0.2, 0.4, 0.6, 0.8]
+    description: "Component failures in perception-planning-control pipeline"
+    runs_per_level: 100
+  - name: "data_corruption"
+    levels: [0.0, 0.2, 0.4, 0.6, 0.8]
+    description: "Sensor data and state corruption"
+    runs_per_level: 100
+  - name: "noise_injection"
+    levels: [0.0, 0.2, 0.4, 0.6, 0.8]
+    description: "Multi-source noise in sensors and processing"
+    runs_per_level: 100
+  - name: "adversarial_patches"
+    levels: [0.0, 0.2, 0.4, 0.6, 0.8]
+    description: "Adversarial visual patterns"
+    runs_per_level: 100
+  # Legacy scenarios (for backward compatibility)
   - name: "lighting"
     levels: [0.0, 0.3, 0.6]
+    runs_per_level: 50
   - name: "motion_blur"
     levels: [0.0, 0.5, 1.0]
+    runs_per_level: 50
   - name: "overlap"
     levels: [0.0, 0.5]
+    runs_per_level: 50
   - name: "camera_jitter"
     levels: [0.0, 0.3, 0.6]
+    runs_per_level: 50
+
+# Statistical power settings
+statistical:
+  min_samples_per_condition: 100  # For 80% power at α=0.05
+  confidence_level: 0.95
+  effect_size_target: 0.5  # Cohen's d
+
+# 3D models for realistic testing
+models_3d:
+  enabled: true
+  types:
+    - human
+    - vehicle
+    - traffic_sign_stop
+    - traffic_sign_yield
 
