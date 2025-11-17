@@ -58,6 +58,23 @@ This runs a perturbation sweep for the occlusion scenario and generates CSV, PNG
 
 See **[EXPERIMENTS.md](EXPERIMENTS.md)** for complete documentation.
 
+### 🚀 Robo-Oracle: Publication-Track Research
+
+**NEW**: Transform this experiment suite into a high-impact publication for CoRL/RSS/ICRA:
+
+  # Test the Oracle (Module 1)
+  python3 test_oracle.py
+
+  # Generate expert demonstrations
+  python3 -c "from oracle.oracle_interface import Oracle; Oracle().generate_expert_demonstrations(num_demos=1000)"
+
+  # Generate labeled failure dataset
+  python3 oracle/data_generation.py --num-samples 1000
+
+**Robo-Oracle** uses the deterministic classical pipeline as a ground-truth "Oracle" to provide causal labels for failures in opaque end-to-end policies (e.g., Diffusion Policies). This solves a critical bottleneck in modern robotics: **diagnosing why black-box policies fail**.
+
+See **[ROBO_ORACLE.md](ROBO_ORACLE.md)** for the complete research roadmap and publication strategy.
+
 Run a Single Scenario
 ---------------------
 
