@@ -110,7 +110,7 @@ class VisionEncoder(nn.Module):
         # Flatten batch and obs_horizon
         x = x.view(batch * obs_horizon, c, h, w)
         x = self.conv(x)
-        x = x.view(batch * obs_horizon, -1)
+        x = x.reshape(batch * obs_horizon, -1)
         x = self.fc(x)
         # Reshape back
         x = x.view(batch, obs_horizon, -1)
@@ -309,7 +309,7 @@ class DiffusionPolicy(nn.Module):
         features = self.vision_encoder(obs)  # (batch, obs_horizon, feature_dim)
         # Flatten
         batch = features.shape[0]
-        features = features.view(batch, -1)
+        features = features.reshape(batch, -1)
         return features
 
     def forward(
