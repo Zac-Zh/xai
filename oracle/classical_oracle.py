@@ -174,15 +174,15 @@ class ClassicalOracle:
                 "steps": int(self.cfg["max_steps"]),
             },
             "perception": {
-                "avg_conf": float(det["avg_conf"]),
-                "detected": bool(det["detected"]),
+                "avg_conf": float(det.get("avg_conf", 0.0)),
+                "detected": bool(det.get("detected", False)),
                 "seg_iou": None if seg.get("seg_iou") is None else float(seg["seg_iou"]),
-                "bbox": [int(x) for x in det["bbox"]],
+                "bbox": [int(x) for x in det.get("bbox", [0, 0, 0, 0])],
             },
             "geometry": {
                 "pnp_success": bool(geom["pnp_success"]),
                 "pnp_rmse": None if geom.get("pnp_rmse") is None else float(geom["pnp_rmse"]),
-                "pose_estimate": [float(v) for v in geom["pose_estimate"]],
+                "pose_estimate": [float(v) if v is not None else 0.0 for v in geom.get("pose_estimate", [0.0, 0.0, 0.0])],
             },
             "planning": {
                 "success": bool(plan_out["success"]),
