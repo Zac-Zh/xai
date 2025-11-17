@@ -1,9 +1,37 @@
+Robo-Oracle: Causal Failure Diagnosis for Robotic Systems
+==========================================================
+
+🤖 **NEW: Robo-Oracle Implementation**
+
+This repository now includes **Robo-Oracle**, a novel framework for self-supervised causal failure attribution in opaque end-to-end robotic policies. Robo-Oracle uses the classical pipeline as a "ground-truth oracle" to train diagnostic models that can explain *why* black-box policies fail.
+
+📖 **Quick Links:**
+- **Complete Documentation**: [ROBO_ORACLE_README.md](ROBO_ORACLE_README.md) - Full system documentation
+- **Quick Start Guide**: [QUICKSTART.md](QUICKSTART.md) - Get started in 30 minutes
+- **Run Full Pipeline**: `python run_robo_oracle_pipeline.py --mode quick-test`
+
+---
+
+## Repository Structure
+
+This repository contains two main components:
+
+### 1. **Classical Pipeline (R2)** - The "Oracle"
+The original deterministic, white-box robotics pipeline with layered failure attribution.
+
+### 2. **Robo-Oracle** - Self-Supervised Failure Diagnosis
+A complete system for training diagnostic models using the classical pipeline as a supervisor.
+
+---
+
 R2: Layered Failure Attribution & Explainability Metrics for Robotics
 ====================================================================
 
 Overview
 --------
-This repository implements a complete, offline‑reproducible pipeline for a synthetic robotics task “Lift” with layered failure attribution across modules: Vision → Geometry → Planning → Control. The pipeline supports perturbation sweeps, JSONL logging, rule‑based attribution, metrics aggregation, PNG plots, and an offline Plotly dashboard. Everything runs with pure Python 3.10+, numpy, pandas, matplotlib, and plotly (offline), with deterministic seeds and no Internet or external assets.
+This repository implements a complete, offline‑reproducible pipeline for a synthetic robotics task "Lift" with layered failure attribution across modules: Vision → Geometry → Planning → Control. The pipeline supports perturbation sweeps, JSONL logging, rule‑based attribution, metrics aggregation, PNG plots, and an offline Plotly dashboard. Everything runs with pure Python 3.10+, numpy, pandas, matplotlib, and plotly (offline), with deterministic seeds and no Internet or external assets.
+
+**Note**: This classical pipeline serves as the "Oracle" in the Robo-Oracle system, providing ground-truth causal labels for training diagnostic models.
 
 Pipeline Diagram (ASCII)
 ------------------------
