@@ -18,6 +18,7 @@ from typing import Dict, List, Any, Optional
 from pathlib import Path
 from datetime import datetime
 import numpy as np
+import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -45,7 +46,10 @@ class RoboOracleDataGenerator:
         opaque_model_checkpoint: str,
         config_path: str,
         thresholds_path: str,
-        output_dir: str
+        output_dir: str,
+        max_frames_per_failure: int = 50,
+        max_failures_to_save: int = 500,
+        min_free_space_gb: float = 5.0
     ):
         """
         Initialize the Robo-Oracle Data Generator.
@@ -55,8 +59,16 @@ class RoboOracleDataGenerator:
             config_path: Path to environment configuration
             thresholds_path: Path to thresholds for attribution
             output_dir: Directory to save generated data
+            max_frames_per_failure: Maximum number of frames to save per failure (default: 50)
+            max_failures_to_save: Maximum number of failures to save videos for (default: 500)
+            min_free_space_gb: Minimum free disk space in GB before skipping video saves (default: 5.0)
         """
         self.output_dir = output_dir
+        self.max_frames_per_failure = max_frames_per_failure
+        self.max_failures_to_save = max_failures_to_save
+        self.min_free_space_gb = min_free_space_gb
+        self.failures_saved_count = 0
+
         os.makedirs(output_dir, exist_ok=True)
 
         # Create output subdirectories
@@ -77,6 +89,27 @@ class RoboOracleDataGenerator:
         self.oracle = ClassicalOracle(config_path, thresholds_path)
 
         print("Initialization complete!")
+        print(f"Video save limits: max {max_frames_per_failure} frames/failure, "
+              f"max {max_failures_to_save} failures total")
+
+    def _check_disk_space(self) -> bool:
+        """Check if there's enough free disk space."""
+        try:
+            stat = shutil.disk_usage(self.output_dir)
+            free_gb = stat.free / (1024 ** 3)
+            return free_gb >= self.min_free_space_gb
+        except Exception as e:
+            print(f"Warning: Could not check disk space: {e}")
+            return True  # Continue on error
+
+    def _should_save_video(self) -> bool:
+        """Determine if we should save video frames for this failure."""
+        if self.failures_saved_count >= self.max_failures_to_save:
+            return False
+        if not self._check_disk_space():
+            print(f"\nWarning: Low disk space (< {self.min_free_space_gb}GB). Skipping video saves.")
+            return False
+        return True
 
     def generate_labeled_dataset(
         self,
@@ -204,19 +237,32 @@ class RoboOracleDataGenerator:
         """Create a failure record with opaque rollout and oracle label."""
         failure_id = f"{scenario}_{perturbation_level}_{seed}"
 
-        # Save video frames
+        # Save video frames with disk space management
         video_paths = []
-        if save_video and opaque_result.rollout_frames:
+        frames_saved = 0
+        if save_video and opaque_result.rollout_frames and self._should_save_video():
             failure_frames_dir = os.path.join(self.frames_dir, failure_id)
             os.makedirs(failure_frames_dir, exist_ok=True)
 
-            for frame_idx, frame in enumerate(opaque_result.rollout_frames):
-                frame_path = os.path.join(
-                    failure_frames_dir,
-                    f"frame_{frame_idx:04d}.npy"
-                )
-                np.save(frame_path, frame)
-                video_paths.append(frame_path)
+            # Limit number of frames to save
+            total_frames = len(opaque_result.rollout_frames)
+            frames_to_save = opaque_result.rollout_frames[:self.max_frames_per_failure]
+
+            # Save as compressed npz instead of individual npy files
+            frames_dict = {}
+            for frame_idx, frame in enumerate(frames_to_save):
+                frames_dict[f"frame_{frame_idx:04d}"] = frame
+                frames_saved += 1
+
+            # Save all frames in a single compressed file
+            compressed_path = os.path.join(failure_frames_dir, "frames.npz")
+            np.savez_compressed(compressed_path, **frames_dict)
+            video_paths.append(compressed_path)
+
+            self.failures_saved_count += 1
+
+            if frames_saved < total_frames:
+                print(f"  Note: Saved {frames_saved}/{total_frames} frames for {failure_id}")
 
         # Create record
         record = {
@@ -346,6 +392,24 @@ def main():
         action="store_true",
         help="Skip saving video frames"
     )
+    parser.add_argument(
+        "--max-frames",
+        type=int,
+        default=50,
+        help="Maximum number of frames to save per failure (default: 50, reduces disk usage)"
+    )
+    parser.add_argument(
+        "--max-failures",
+        type=int,
+        default=500,
+        help="Maximum number of failures to save videos for (default: 500)"
+    )
+    parser.add_argument(
+        "--min-free-space",
+        type=float,
+        default=5.0,
+        help="Minimum free disk space in GB before skipping video saves (default: 5.0)"
+    )
 
     args = parser.parse_args()
 
@@ -354,7 +418,10 @@ def main():
         opaque_model_checkpoint=args.opaque_model,
         config_path=args.cfg,
         thresholds_path=args.thresholds,
-        output_dir=args.output_dir
+        output_dir=args.output_dir,
+        max_frames_per_failure=args.max_frames,
+        max_failures_to_save=args.max_failures,
+        min_free_space_gb=args.min_free_space
     )
 
     # Generate dataset
