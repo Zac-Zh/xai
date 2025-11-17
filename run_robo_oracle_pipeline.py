@@ -5,14 +5,24 @@ Robo-Oracle Master Pipeline Script
 This script orchestrates the complete Robo-Oracle pipeline from start to finish:
 1. Generate expert demonstrations
 2. Train Diffusion Policy
-3. Generate labeled failure dataset
+3. Generate labeled failure dataset (with disk space management)
 4. Prepare VLM training data
 5. Train diagnostic VLM
 6. Evaluate diagnostic model
 
+Disk Budget Presets:
+  quick-test mode: 500 failures × 50 frames = ~3.75GB (conservative)
+  full mode:       1000 failures × 75 frames = ~11.25GB (balanced, recommended)
+
 Usage:
+  # Full pipeline with balanced disk budget (recommended for 25GB available)
   python run_robo_oracle_pipeline.py --mode full
-  python run_robo_oracle_pipeline.py --mode quick-test  # Smaller dataset for testing
+
+  # Quick test with conservative budget
+  python run_robo_oracle_pipeline.py --mode quick-test
+
+  # Full pipeline with maximum coverage (~22.5GB)
+  python run_robo_oracle_pipeline.py --mode full --max-frames 100 --max-failures 1500
 """
 
 import os
@@ -32,12 +42,16 @@ class RoboOraclePipeline:
         mode: str = "full",
         output_base: str = "results/robo_oracle_pipeline",
         config_path: str = "configs/robosuite_grasp.yaml",
-        thresholds_path: str = "configs/thresholds.yaml"
+        thresholds_path: str = "configs/thresholds.yaml",
+        max_frames: int = None,
+        max_failures: int = None,
+        min_free_space: float = 5.0
     ):
         self.mode = mode
         self.output_base = output_base
         self.config_path = config_path
         self.thresholds_path = thresholds_path
+        self.min_free_space = min_free_space
 
         # Create timestamped output directory
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -56,7 +70,11 @@ class RoboOraclePipeline:
                 "diffusion_epochs": 20,
                 "diffusion_batch_size": 16,
                 "vlm_epochs": 20,
-                "vlm_batch_size": 8
+                "vlm_batch_size": 8,
+                # Disk budget: conservative preset (good for testing)
+                "max_frames_per_failure": max_frames if max_frames is not None else 50,
+                "max_failures_to_save": max_failures if max_failures is not None else 500,
+                "estimated_disk_gb": 3.75
             }
         else:  # full mode
             self.params = {
@@ -69,7 +87,11 @@ class RoboOraclePipeline:
                 "diffusion_epochs": 100,
                 "diffusion_batch_size": 32,
                 "vlm_epochs": 50,
-                "vlm_batch_size": 16
+                "vlm_batch_size": 16,
+                # Disk budget: balanced preset (recommended for 25GB budget)
+                "max_frames_per_failure": max_frames if max_frames is not None else 75,
+                "max_failures_to_save": max_failures if max_failures is not None else 1000,
+                "estimated_disk_gb": 11.25
             }
 
         # Output directories
@@ -86,6 +108,10 @@ class RoboOraclePipeline:
         print(f"Robo-Oracle Pipeline - Mode: {mode.upper()}")
         print(f"{'='*70}")
         print(f"Output directory: {self.run_dir}")
+        print(f"\nDisk Budget Configuration:")
+        print(f"  Max frames per failure: {self.params['max_frames_per_failure']}")
+        print(f"  Max failures to save:   {self.params['max_failures_to_save']}")
+        print(f"  Estimated disk usage:   ~{self.params['estimated_disk_gb']:.2f} GB")
         print(f"{'='*70}\n")
 
     def run_command(self, cmd: list, step_name: str) -> bool:
@@ -159,7 +185,11 @@ class RoboOraclePipeline:
             "--scenarios", *self.params["failure_scenarios"],
             "--levels", *[str(l) for l in self.params["failure_levels"]],
             "--num-seeds", str(self.params["failure_seeds"]),
-            "--output-dir", self.dirs["failures"]
+            "--output-dir", self.dirs["failures"],
+            # Disk budget parameters
+            "--max-frames", str(self.params["max_frames_per_failure"]),
+            "--max-failures", str(self.params["max_failures_to_save"]),
+            "--min-free-space", str(self.min_free_space)
         ]
         return self.run_command(cmd, "Generate Labeled Failure Dataset")
 
@@ -286,11 +316,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run full pipeline (production)
+  # Run full pipeline with default balanced disk budget (1000 failures, 75 frames, ~11GB)
   python run_robo_oracle_pipeline.py --mode full
 
   # Run quick test (for development/debugging)
   python run_robo_oracle_pipeline.py --mode quick-test
+
+  # Full pipeline with maximum disk budget (1500 failures, 100 frames, ~22.5GB)
+  python run_robo_oracle_pipeline.py --mode full --max-frames 100 --max-failures 1500
+
+  # Full pipeline with conservative budget (500 failures, 50 frames, ~3.75GB)
+  python run_robo_oracle_pipeline.py --mode full --max-frames 50 --max-failures 500
 
   # Custom output directory
   python run_robo_oracle_pipeline.py --mode full --output results/my_experiment
@@ -318,6 +354,24 @@ Examples:
         default="configs/thresholds.yaml",
         help="Thresholds file path"
     )
+    parser.add_argument(
+        "--max-frames",
+        type=int,
+        default=None,
+        help="Max frames per failure (default: 50 for quick-test, 75 for full)"
+    )
+    parser.add_argument(
+        "--max-failures",
+        type=int,
+        default=None,
+        help="Max failures to save videos for (default: 500 for quick-test, 1000 for full)"
+    )
+    parser.add_argument(
+        "--min-free-space",
+        type=float,
+        default=5.0,
+        help="Minimum free disk space in GB before skipping video saves (default: 5.0)"
+    )
 
     args = parser.parse_args()
 
@@ -326,7 +380,10 @@ Examples:
         mode=args.mode,
         output_base=args.output,
         config_path=args.cfg,
-        thresholds_path=args.thresholds
+        thresholds_path=args.thresholds,
+        max_frames=args.max_frames,
+        max_failures=args.max_failures,
+        min_free_space=args.min_free_space
     )
 
     success = pipeline.run()
