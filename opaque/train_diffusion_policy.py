@@ -82,6 +82,21 @@ class ExpertDemonstrationDataset(Dataset):
         skipped_no_actions = 0
         skipped_not_enough_data = 0
 
+        # Debug: print first demo structure
+        if len(self.demonstrations) > 0:
+            print(f"\nDEBUG: First demo structure:")
+            demo_sample = self.demonstrations[0]
+            print(f"  - demo_id: {demo_sample.get('demo_id', 'N/A')}")
+            print(f"  - frames_paths length: {len(demo_sample.get('frames_paths', []))}")
+            if len(demo_sample.get('frames_paths', [])) > 0:
+                print(f"  - First frame path: {demo_sample['frames_paths'][0]}")
+                print(f"  - Frame exists: {os.path.exists(demo_sample['frames_paths'][0])}")
+            print(f"  - log_data keys: {list(demo_sample.get('log_data', {}).keys())}")
+            if 'geometry' in demo_sample.get('log_data', {}):
+                geom = demo_sample['log_data']['geometry']
+                print(f"  - geometry keys: {list(geom.keys())}")
+                print(f"  - pose_estimate: {geom.get('pose_estimate', 'N/A')}")
+
         for demo in self.demonstrations:
             # Load frames
             frames = []
@@ -126,13 +141,19 @@ class ExpertDemonstrationDataset(Dataset):
                         actions.append(waypoint)
             except (KeyError, IndexError, TypeError) as e:
                 # Skip this demo if we can't extract actions
+                if skipped_no_actions < 3:  # Print first few errors
+                    print(f"  DEBUG: Skipping demo {demo.get('demo_id', 'unknown')}: {type(e).__name__}: {e}")
                 skipped_no_actions += 1
                 continue
 
             # Only add if we have enough frames and actions
             if len(frames) < self.obs_horizon:
+                if skipped_no_frames < 3:  # Debug first few
+                    print(f"  DEBUG: Demo {demo.get('demo_id', 'unknown')}: only {len(frames)} frames, need {self.obs_horizon}")
                 skipped_no_frames += 1
             elif len(actions) < self.action_horizon:
+                if skipped_not_enough_data < 3:  # Debug first few
+                    print(f"  DEBUG: Demo {demo.get('demo_id', 'unknown')}: only {len(actions)} actions, need {self.action_horizon}")
                 skipped_not_enough_data += 1
             else:
                 trajectories.append({
