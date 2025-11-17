@@ -1,0 +1,55 @@
+# Disk Budget Presets for Robo-Oracle Failure Frame Storage
+#
+# These presets help you configure storage limits based on available disk space
+# Usage: Use these values with --max-frames and --max-failures arguments
+
+presets:
+  # Conservative: ~7.5GB total
+  # Good for limited disk space or quick experiments
+  conservative:
+    max_frames_per_failure: 50
+    max_failures_to_save: 500
+    estimated_disk_usage_gb: 7.5
+    use_case: "Quick experiments, limited disk space"
+
+  # Balanced: ~15GB total
+  # Recommended for most use cases with 25GB budget
+  balanced:
+    max_frames_per_failure: 75
+    max_failures_to_save: 1000
+    estimated_disk_usage_gb: 15.0
+    use_case: "Good balance of quality and coverage, recommended default"
+
+  # Maximum: ~24GB total
+  # Uses full 25GB budget for comprehensive dataset
+  maximum:
+    max_frames_per_failure: 100
+    max_failures_to_save: 1500
+    estimated_disk_usage_gb: 24.0
+    use_case: "Maximum coverage for VLM training, uses full budget"
+
+  # Full quality: ~20GB total
+  # Saves all frames for fewer failures (best for detailed analysis)
+  full_quality:
+    max_frames_per_failure: 150  # All frames
+    max_failures_to_save: 800
+    estimated_disk_usage_gb: 20.0
+    use_case: "Full frame sequences for detailed failure analysis"
+
+# Quick reference calculations:
+# Compressed frame size: ~150KB (npz compressed from 900KB npy)
+# Per failure cost: max_frames × 150KB
+# Total cost: max_failures × (max_frames × 150KB)
+
+# Example commands:
+# Conservative (7.5GB):
+#   python robo_oracle/generate_labeled_failures.py --max-frames 50 --max-failures 500
+#
+# Balanced (15GB) - RECOMMENDED:
+#   python robo_oracle/generate_labeled_failures.py --max-frames 75 --max-failures 1000
+#
+# Maximum (24GB):
+#   python robo_oracle/generate_labeled_failures.py --max-frames 100 --max-failures 1500
+#
+# Full quality (20GB):
+#   python robo_oracle/generate_labeled_failures.py --max-frames 150 --max-failures 800
