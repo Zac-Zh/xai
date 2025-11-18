@@ -30,6 +30,33 @@ except ImportError:
     print("Warning: Missing dependencies. Install with: pip install numpy pillow tqdm")
 
 
+def load_frame(path: str) -> np.ndarray:
+    """
+    Load a frame from either .npy or .npz file.
+
+    Args:
+        path: Path to frame file
+
+    Returns:
+        Frame as numpy array
+    """
+    loaded = np.load(path)
+
+    # If it's an .npz file, extract the array
+    if isinstance(loaded, np.lib.npyio.NpzFile):
+        # Get the first array from the archive
+        # Common keys: 'arr_0', 'image', 'frame', etc.
+        keys = list(loaded.keys())
+        if not keys:
+            raise ValueError(f"Empty .npz file: {path}")
+        frame = loaded[keys[0]]
+        loaded.close()
+        return frame
+    else:
+        # It's a regular .npy file
+        return loaded
+
+
 def frames_to_video(
     frame_paths: List[str],
     output_path: str,
@@ -39,7 +66,7 @@ def frames_to_video(
     Convert frames to video.
 
     Args:
-        frame_paths: List of paths to frame files (.npy)
+        frame_paths: List of paths to frame files (.npy or .npz)
         output_path: Output video path
         fps: Frames per second
 
@@ -57,7 +84,7 @@ def frames_to_video(
         try:
             frames = []
             for path in frame_paths:
-                frame = np.load(path)
+                frame = load_frame(path)
                 frames.append(Image.fromarray(frame.astype(np.uint8)))
 
             # Save as GIF
@@ -77,7 +104,7 @@ def frames_to_video(
     # Use OpenCV to create video
     frames = []
     for path in frame_paths:
-        frame = np.load(path)
+        frame = load_frame(path)
         frames.append(frame)
 
     if not frames:
