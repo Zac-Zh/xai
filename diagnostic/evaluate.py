@@ -133,9 +133,19 @@ class DiagnosticEvaluator:
 
     def _load_frames(self, video_path: str) -> List[np.ndarray]:
         """Load frames from video path."""
-        if video_path.endswith('.npy'):
-            # Single frame
-            return [np.load(video_path)]
+        if video_path.endswith('.npy') or video_path.endswith('.npz'):
+            # Single frame - handle both .npy and .npz
+            loaded = np.load(video_path)
+            if isinstance(loaded, np.lib.npyio.NpzFile):
+                # Extract first array from .npz archive
+                keys = list(loaded.keys())
+                if not keys:
+                    raise ValueError(f"Empty .npz file: {video_path}")
+                frame = loaded[keys[0]]
+                loaded.close()
+                return [frame]
+            else:
+                return [loaded]
         elif video_path.endswith('.gif'):
             # Load GIF frames
             from PIL import Image
@@ -147,6 +157,27 @@ class DiagnosticEvaluator:
                     img.seek(img.tell() + 1)
             except EOFError:
                 pass
+            return frames
+        elif video_path.endswith('.mp4') or video_path.endswith('.avi'):
+            # Load video frames using OpenCV
+            try:
+                import cv2
+            except ImportError:
+                raise ImportError("OpenCV (cv2) is required to load video files. Install with: pip install opencv-python")
+
+            cap = cv2.VideoCapture(video_path)
+            frames = []
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                # Convert BGR to RGB
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frames.append(frame_rgb)
+            cap.release()
+
+            if not frames:
+                raise ValueError(f"No frames loaded from video: {video_path}")
             return frames
         else:
             # Try single image
@@ -227,8 +258,17 @@ class DiagnosticEvaluator:
         confidences: List[float]
     ):
         """Generate evaluation visualizations."""
+        # Check if we have any valid results
+        if not predictions or not labels:
+            print("\nNo valid predictions - skipping visualizations")
+            return
+
         # Confusion matrix heatmap
         categories = sorted(set(labels))
+        if not categories:
+            print("\nNo categories found - skipping visualizations")
+            return
+
         confusion = self._compute_confusion_matrix(predictions, labels, categories)
 
         plt.figure(figsize=(10, 8))
@@ -254,20 +294,27 @@ class DiagnosticEvaluator:
         plt.close()
 
         # Confidence distribution
+        if not confidences:
+            print("\nNo confidence scores - skipping confidence distribution")
+            return
+
         plt.figure(figsize=(10, 6))
         correct_confidences = [c for c, p, l in zip(confidences, predictions, labels) if p == l]
         incorrect_confidences = [c for c, p, l in zip(confidences, predictions, labels) if p != l]
 
-        plt.hist(correct_confidences, bins=20, alpha=0.7, label='Correct', color='green')
-        plt.hist(incorrect_confidences, bins=20, alpha=0.7, label='Incorrect', color='red')
-        plt.xlabel('Confidence', fontsize=12)
-        plt.ylabel('Count', fontsize=12)
-        plt.title('Confidence Distribution', fontsize=16)
-        plt.legend()
-        plt.grid(alpha=0.3)
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.output_dir, 'confidence_distribution.png'), dpi=150)
-        plt.close()
+        if correct_confidences or incorrect_confidences:
+            if correct_confidences:
+                plt.hist(correct_confidences, bins=20, alpha=0.7, label='Correct', color='green')
+            if incorrect_confidences:
+                plt.hist(incorrect_confidences, bins=20, alpha=0.7, label='Incorrect', color='red')
+            plt.xlabel('Confidence', fontsize=12)
+            plt.ylabel('Count', fontsize=12)
+            plt.title('Confidence Distribution', fontsize=16)
+            plt.legend()
+            plt.grid(alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(os.path.join(self.output_dir, 'confidence_distribution.png'), dpi=150)
+            plt.close()
 
         print(f"\nVisualizations saved to {self.output_dir}")
 
