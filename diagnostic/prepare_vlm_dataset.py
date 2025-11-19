@@ -213,17 +213,44 @@ def prepare_vlm_dataset(
 
     print(f"\nGenerated {len(vlm_samples)} VLM training samples")
 
-    # Split into train/val
+    # Stratified split into train/val to maintain class distributions
     import random
     random.seed(42)
-    random.shuffle(vlm_samples)
 
-    split_idx = int(len(vlm_samples) * train_split)
-    train_samples = vlm_samples[:split_idx]
-    val_samples = vlm_samples[split_idx:]
+    # Group samples by failure category
+    samples_by_category = defaultdict(list)
+    for sample in vlm_samples:
+        category = sample["metadata"]["failure_module"]
+        samples_by_category[category].append(sample)
 
-    print(f"Train samples: {len(train_samples)}")
-    print(f"Validation samples: {len(val_samples)}")
+    # Perform stratified split
+    train_samples = []
+    val_samples = []
+
+    print("\nPerforming stratified split:")
+    for category, samples in sorted(samples_by_category.items()):
+        random.shuffle(samples)
+        split_idx = int(len(samples) * train_split)
+
+        # Ensure at least 1 sample in validation if category has >= 2 samples
+        if split_idx == len(samples) and len(samples) >= 2:
+            split_idx = len(samples) - 1
+
+        cat_train = samples[:split_idx]
+        cat_val = samples[split_idx:]
+
+        train_samples.extend(cat_train)
+        val_samples.extend(cat_val)
+
+        print(f"  {category}: {len(cat_train)} train / {len(cat_val)} val "
+              f"(total: {len(samples)})")
+
+    # Shuffle the combined sets to mix categories
+    random.shuffle(train_samples)
+    random.shuffle(val_samples)
+
+    print(f"\nTotal - Train samples: {len(train_samples)}")
+    print(f"Total - Validation samples: {len(val_samples)}")
 
     # Save datasets
     train_path = os.path.join(output_dir, "train_vlm_dataset.json")
@@ -251,16 +278,31 @@ def prepare_vlm_dataset(
             "samples": val_samples
         }, f, indent=2)
 
-    # Create category distribution report
-    category_dist = {}
+    # Create category distribution report for both sets
+    train_dist = {}
     for sample in train_samples:
         cat = sample["metadata"]["failure_module"]
-        category_dist[cat] = category_dist.get(cat, 0) + 1
+        train_dist[cat] = train_dist.get(cat, 0) + 1
 
-    print("\nTraining set failure category distribution:")
-    for cat, count in sorted(category_dist.items(), key=lambda x: x[1], reverse=True):
-        pct = (count / len(train_samples) * 100) if train_samples else 0
-        print(f"  {cat}: {count} ({pct:.1f}%)")
+    val_dist = {}
+    for sample in val_samples:
+        cat = sample["metadata"]["failure_module"]
+        val_dist[cat] = val_dist.get(cat, 0) + 1
+
+    all_categories = sorted(set(list(train_dist.keys()) + list(val_dist.keys())))
+
+    print("\nClass distribution after stratified split:")
+    print("-" * 50)
+    print(f"{'Category':<15} {'Train':>10} {'Val':>10} {'Total':>10}")
+    print("-" * 50)
+    for cat in all_categories:
+        train_count = train_dist.get(cat, 0)
+        val_count = val_dist.get(cat, 0)
+        total = train_count + val_count
+        train_pct = (train_count / len(train_samples) * 100) if train_samples else 0
+        val_pct = (val_count / len(val_samples) * 100) if val_samples else 0
+        print(f"{cat:<15} {train_count:>6} ({train_pct:>4.1f}%) {val_count:>4} ({val_pct:>4.1f}%) {total:>6}")
+    print("-" * 50)
 
     print("\n" + "="*60)
     print("VLM Dataset Preparation Complete!")
